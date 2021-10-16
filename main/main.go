@@ -28,8 +28,8 @@ func main() {
   url: https://github.com/gophercises/urlshort/tree/solution
 `
 	yamlHandler, err := go_url_short.YAMLHandler([]byte(yaml), mapHandler)
-	content, err := ioutil.ReadFile("./redirect.json")
-	jsonHandler, err := go_url_short.JSONHandler(content, yamlHandler)
+	content, _ := ioutil.ReadFile("./redirect.json")
+	jsonHandler, _ := go_url_short.JSONHandler(content, yamlHandler)
 
 	if err != nil {
 		log.Fatal(err)
