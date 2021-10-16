@@ -1,8 +1,18 @@
 package go_url_short
 
 import (
+	"log"
 	"net/http"
+
+	je "encoding/json"
+
+	yaml "gopkg.in/yaml.v2"
 )
+
+type UrlData struct {
+	Path string `yaml:"path" json:"path"`
+	Url  string `yaml:"url" json:"url"`
+}
 
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
@@ -41,13 +51,53 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
 
 	if yml == nil {
 		return fallback.ServeHTTP, nil
 	}
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		fallback.ServeHTTP(w, r)
-	}, nil
+	pathsToUrls := make(map[string]string)
+
+	var urls []UrlData
+
+	err := yaml.Unmarshal(yml, &urls)
+
+	if err != nil {
+		log.Fatalf("cannot unmarshal data:  %v", err)
+		return fallback.ServeHTTP, err
+	}
+
+	for _, url := range urls {
+		pathsToUrls[url.Path] = url.Url
+	}
+	if len(pathsToUrls) == 0 {
+		return fallback.ServeHTTP, nil
+	}
+	return MapHandler(pathsToUrls, fallback), nil
+}
+
+func JSONHandler(json []byte, fallback http.Handler) (http.HandlerFunc, error) {
+
+	if json == nil {
+		return fallback.ServeHTTP, nil
+	}
+
+	pathsToUrls := make(map[string]string)
+
+	var urls []UrlData
+
+	err := je.Unmarshal(json, &urls)
+
+	if err != nil {
+		log.Fatalf("cannot unmarshal data:  %v", err)
+		return fallback.ServeHTTP, err
+	}
+
+	for _, url := range urls {
+		pathsToUrls[url.Path] = url.Url
+	}
+	if len(pathsToUrls) == 0 {
+		return fallback.ServeHTTP, nil
+	}
+	return MapHandler(pathsToUrls, fallback), nil
 }
